@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rádio do Grid — Fórmula 1</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,600;0,700;0,800;1,600;1,700;1,800&family=Titillium+Web:ital,wght@0,400;0,600;0,700;1,600;1,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ============ TOPO / NAVEGAÇÃO ============ -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="#inicio" class="brand" aria-label="Rádio do Grid">
+        <span class="brand-r" aria-hidden="true">R<svg viewBox="0 0 22 24"><path fill="#E10600" d="M8 0 2 24h5L13 0H8Z" opacity=".55"/><path fill="#E10600" d="M16 0l-6 24h4.4L20.4 0H16Z" opacity=".28"/></svg></span>
+        <span class="brand-word">GRID</span>
+      </a>
+
+      <nav class="mainnav" aria-label="Navegação principal">
+        <a href="#inicio" class="active" data-i18n="nav_home">Início</a>
+        <a href="#pilotos" data-i18n="nav_drivers">Pilotos</a>
+        <a href="#campeonato" data-i18n="nav_standings">Campeonato</a>
+        <a href="#calendario" data-i18n="nav_calendar">Calendário</a>
+        <a href="#equipes" data-i18n="nav_teams">Equipes</a>
+        <a href="#estatisticas" data-i18n="nav_stats">Estatísticas</a>
+      </nav>
+
+      <div class="topbar-actions">
+        <div class="lang-wrap">
+          <button class="lang" id="langBtn" type="button" aria-haspopup="listbox" aria-expanded="false">
+            <svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.8 2.6 4.2 5.6 4.2 9S14.8 18.4 12 21c-2.8-2.6-4.2-5.6-4.2-9S9.2 5.6 12 3Z"/></svg>
+            <span id="langCur">PT</span>
+            <svg class="ic chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <div class="lang-menu" id="langMenu" hidden>
+            <button type="button" data-lang="pt" class="active"><strong>PT</strong> Português</button>
+            <button type="button" data-lang="en"><strong>EN</strong> English</button>
+            <button type="button" data-lang="es"><strong>ES</strong> Español</button>
+          </div>
+        </div>
+        <span class="topbar-sep" aria-hidden="true"></span>
+        <button class="bell" type="button" aria-label="Notificações">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M18 16v-5a6 6 0 1 0-12 0v5l-1.8 2.5h15.6L18 16Z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+        </button>
+        <a href="#calendario" class="btn btn-primary btn-cal">
+          <span data-i18n="btn_calendar">Ver calendário</span>
+          <svg class="ic" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 2.8V6.2M16 2.8V6.2"/></svg>
+        </a>
+        <button class="nav-toggle" id="navToggle" type="button" aria-label="Menu" aria-expanded="false">
+          <svg class="ic" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ HERO / PRÓXIMA CORRIDA ============ -->
+  <section class="hero" id="inicio">
+    <div class="hero-bg" id="heroBg" aria-hidden="true"></div>
+    <div class="hero-vignette" aria-hidden="true"></div>
+
+    <div class="hero-inner">
+      <!-- Coluna esquerda -->
+      <div class="hero-left">
+        <p class="kicker" data-i18n="kicker">Próxima corrida</p>
+        <h1 class="hero-title" id="heroTitle">Grande Prêmio<br>de São Paulo</h1>
+
+        <p class="hero-loc">
+          <span class="flag" id="heroFlag" aria-hidden="true">
+            <svg viewBox="0 0 28 20"><rect width="28" height="20" fill="#009B3A"/><path d="M14 2.4 25 10 14 17.6 3 10Z" fill="#FEDF00"/><circle cx="14" cy="10" r="4.1" fill="#002776"/><path d="M10.2 8.9c2.6-.5 5.3.2 7.5 1.9" stroke="#fff" stroke-width=".7" fill="none"/></svg>
+          </span>
+          <span id="heroLocText">Autódromo José Carlos Pace <span class="dim">– Interlagos</span></span>
+        </p>
+
+        <p class="hero-date">
+          <svg class="ic red" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 2.8V6.2M16 2.8V6.2"/></svg>
+          <span id="heroDate">7 – 9 Nov 2026</span>
+        </p>
+
+        <p class="hero-desc" id="heroDesc">Um dos circuitos mais históricos<br>e imprevisíveis da Fórmula 1.</p>
+
+        <a href="#" class="btn btn-primary btn-lg">
+          <span data-i18n="btn_race_more">Saiba mais sobre a corrida</span>
+          <svg class="ic" viewBox="0 0 24 24"><path d="M4 12h15M13 5.5 19.5 12 13 18.5"/></svg>
+        </a>
+      </div>
+
+      <!-- Coluna central: contagem regressiva -->
+      <div class="hero-center">
+        <div class="countdown-wrap">
+          <p class="countdown-label"><span class="rule" aria-hidden="true"></span><span data-i18n="countdown_label">Largada em</span><span class="rule" aria-hidden="true"></span></p>
+          <div class="countdown" id="countdown">
+            <div class="count-box"><span class="count-num" id="cdDays">12</span><span class="count-unit" data-i18n="u_days">Dias</span></div>
+            <span class="count-sep" aria-hidden="true">:</span>
+            <div class="count-box"><span class="count-num" id="cdHours">08</span><span class="count-unit" data-i18n="u_hours">Horas</span></div>
+            <span class="count-sep" aria-hidden="true">:</span>
+            <div class="count-box"><span class="count-num" id="cdMins">34</span><span class="count-unit" data-i18n="u_mins">Minutos</span></div>
+            <span class="count-sep" aria-hidden="true">:</span>
+            <div class="count-box"><span class="count-num" id="cdSecs">21</span><span class="count-unit" data-i18n="u_secs">Segundos</span></div>
+          </div>
+          <p class="race-time">
+            <svg class="ic red filled" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path class="hands" d="M12 7v5l3.2 2"/></svg>
+            <span id="raceTimeText">Corrida – Domingo, 14h00</span>
+          </p>
+          <div class="live-badge" id="liveBadge" hidden>
+            <span class="live-dot" aria-hidden="true"></span>
+            <strong data-i18n="live">Ao vivo</strong>
+            <em data-i18n="live_sub">Corrida em andamento</em>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card do circuito -->
+      <aside class="circuit-card">
+        <header class="circuit-head">
+          <svg class="ic red" viewBox="0 0 24 24"><path d="M4 15c0-2 1.6-3 3.6-3h8.8c1.9 0 3.6-1 3.6-3s-1.7-3-3.6-3H9"/><path d="M4 15c0 2 1.6 3 3.6 3H15"/></svg>
+          <h2 id="circuitName">Interlagos</h2>
+        </header>
+
+        <ul class="circuit-stats">
+          <li>
+            <svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.5"/><path d="M12 13l3.5-3.5M9.5 2.5h5M12 2.5v3"/></svg>
+            <div><strong id="statLen">4,309 <small>km</small></strong><span data-i18n="c_length">Extensão</span></div>
+          </li>
+          <li>
+            <svg class="ic" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.9-6.2"/><path d="M20 3v4.5h-4.5"/></svg>
+            <div><strong id="statLaps">71</strong><span data-i18n="c_laps">Voltas</span></div>
+          </li>
+          <li>
+            <svg class="ic" viewBox="0 0 24 24"><path d="M3 18c4-1 5-4 6.5-7S13 5 17 5s4.5 3 4 6"/></svg>
+            <div><strong id="statTurns">15</strong><span data-i18n="c_turns">Curvas</span></div>
+          </li>
+        </ul>
+
+        <figure class="track-map" id="trackMapFig" data-pending-label="Imagem oficial pendente" aria-label="Traçado oficial do circuito">
+          <img id="trackMapImg"
+               src="https://media.formula1.com/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/Brazil_Circuit.png"
+               alt="Traçado oficial do circuito — Formula1.com" loading="lazy">
+        </figure>
+
+        <footer class="circuit-record">
+          <p class="record-label" data-i18n="c_record">Recorde da pista</p>
+          <p class="record-line">
+            <strong id="recordTime">1:10.540</strong>
+            <span class="record-sep" aria-hidden="true"></span>
+            <span class="record-holder" id="recordHolder">Valtteri Bottas (2021)</span>
+          </p>
+        </footer>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ HUB DA CORRIDA (Seção 2) ============ -->
+  <section class="race-hub">
+    <div class="hub-grid" id="hubGridWrap">
+      <div class="hub-main" id="hubMain">
+
+        <!-- Modo programação: histórico + recordes -->
+        <div class="hub-block" id="hubHistory">
+          <h3 class="hub-title"><span class="slashes" aria-hidden="true">//</span><span data-i18n="h_history">Histórico da corrida</span></h3>
+          <ul class="history-list" id="historyList"></ul>
+        </div>
+
+        <div class="hub-block" id="hubRecords">
+          <h3 class="hub-title"><span class="slashes" aria-hidden="true">//</span><span id="recordsTitle">Recordes</span></h3>
+          <ul class="records-list" id="recordsList"></ul>
+        </div>
+      </div>
+
+      <aside class="hub-side">
+        <!-- Modo programação -->
+        <div class="hub-block" id="hubSchedule">
+          <h3 class="hub-title side"><span class="slashes" aria-hidden="true">/</span><span data-i18n="h_schedule">Programação do fim de semana</span></h3>
+          <div id="scheduleList"></div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ PILOTOS POR EQUIPE ============ -->
+  <section class="drivers" id="pilotos">
+    <div class="drivers-panel">
+      <h2 class="section-title">
+        <span class="line" aria-hidden="true"></span>
+        <span data-i18n="sec_drivers">Pilotos</span>&nbsp;<em data-i18n="sec_by_team">por equipe</em>
+        <span class="line" aria-hidden="true"></span>
+      </h2>
+
+      <div class="drivers-grid" id="driversGrid">
+        <!-- Foto piloto 1 -->
+        <figure class="driver-photo left" id="photoLeft" data-pending-label="Imagem oficial pendente">
+          <img src="https://media.formula1.com/content/dam/fom-website/drivers/C/CHALEC01_Charles_Leclerc/chalec01.png"
+               alt="Charles Leclerc — foto oficial Formula1.com" loading="lazy">
+        </figure>
+
+        <!-- Card piloto 1 -->
+        <article class="driver-card" id="cardLeft">
+          <header class="driver-id">
+            <span class="driver-num">16</span>
+            <h3 class="driver-name">Charles<br>Leclerc</h3>
+          </header>
+
+          <p class="driver-country">
+            <span class="flag" aria-hidden="true">
+              <svg viewBox="0 0 28 20"><rect width="28" height="10" fill="#CE1126"/><rect y="10" width="28" height="10" fill="#fff"/></svg>
+            </span>
+            Mônaco
+          </p>
+
+          <ul class="driver-stats">
+            <li><svg class="ic" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 2.8V6.2M16 2.8V6.2"/></svg><span>Data de nasc.</span><strong>16 Out 1997</strong></li>
+            <li><svg class="ic" viewBox="0 0 24 24"><path d="M5 5h14l-1.2 7a5.9 5.9 0 0 1-11.6 0L5 5Z"/><path d="M5 7H2.8a3.3 3.3 0 0 0 3.4 3.5M19 7h2.2a3.3 3.3 0 0 1-3.4 3.5M12 15v3.5m-3.5 2.5h7"/></svg><span>Títulos</span><strong>0</strong></li>
+            <li><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="9" r="4.5"/><path d="m9 12.8-2 8 5-2.6 5 2.6-2-8"/></svg><span>Pódios</span><strong>23</strong></li>
+            <li><svg class="ic" viewBox="0 0 24 24"><path d="m12 3 2.5 5.4 5.9.6-4.4 4 1.2 5.8L12 15.9 6.8 18.8 8 13 3.6 9l5.9-.6L12 3Z"/></svg><span>Vitórias</span><strong>5</strong></li>
+          </ul>
+
+          <a href="#" class="btn btn-ghost btn-more"><span>Saiba mais</span><span class="arrow-cell"><svg class="ic" viewBox="0 0 24 24"><path d="M4 12h15M13 5.5 19.5 12 13 18.5"/></svg></span></a>
+        </article>
+
+        <!-- Equipe (centro) -->
+        <div class="team-center" id="teamCenter">
+          <div class="team-switch">
+            <button class="team-nav" id="teamPrev" type="button" aria-label="Equipe anterior" hidden>
+              <svg class="ic" viewBox="0 0 24 24"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg>
+            </button>
+            <div class="team-head">
+              <figure class="team-logo" id="teamLogoFig" data-pending-label="Imagem oficial pendente">
+                <img id="teamLogoImg" src="https://media.formula1.com/image/upload/c_fit,h_160/q_auto/v1740000001/common/f1/2026/ferrari/2026ferrarilogo.webp"
+                     alt="Logo da equipe — Formula1.com" loading="lazy">
+              </figure>
+              <h3 class="team-name" id="teamName">Ferrari</h3>
+              <p class="team-sub" id="teamSub">Scuderia Ferrari</p>
+            </div>
+            <button class="team-nav" id="teamNext" type="button" aria-label="Próxima equipe" hidden>
+              <svg class="ic" viewBox="0 0 24 24"><path d="M9.5 5.5 16 12l-6.5 6.5"/></svg>
+            </button>
+          </div>
+          <figure class="team-car" id="teamCarFig" data-pending-label="Imagem oficial pendente">
+            <img id="teamCarImg" src="https://media.formula1.com/content/dam/fom-website/teams/2025/ferrari.png"
+                 alt="Carro da equipe — Formula1.com" loading="lazy">
+          </figure>
+          <div class="team-dots" id="teamDots" role="tablist" aria-label="Equipes"></div>
+        </div>
+
+        <!-- Card piloto 2 -->
+        <article class="driver-card" id="cardRight">
+          <header class="driver-id">
+            <span class="driver-num">44</span>
+            <h3 class="driver-name">Lewis<br>Hamilton</h3>
+          </header>
+
+          <p class="driver-country">
+            <span class="flag" aria-hidden="true">
+              <svg viewBox="0 0 28 20"><rect width="28" height="20" fill="#012169"/><path d="M0 0l28 20M28 0 0 20" stroke="#fff" stroke-width="3.6"/><path d="M0 0l28 20M28 0 0 20" stroke="#C8102E" stroke-width="1.6"/><path d="M14 0v20M0 10h28" stroke="#fff" stroke-width="6"/><path d="M14 0v20M0 10h28" stroke="#C8102E" stroke-width="3.4"/></svg>
+            </span>
+            Reino Unido
+          </p>
+
+          <ul class="driver-stats">
+            <li><svg class="ic" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 2.8V6.2M16 2.8V6.2"/></svg><span>Data de nasc.</span><strong>07 Jan 1985</strong></li>
+            <li><svg class="ic" viewBox="0 0 24 24"><path d="M5 5h14l-1.2 7a5.9 5.9 0 0 1-11.6 0L5 5Z"/><path d="M5 7H2.8a3.3 3.3 0 0 0 3.4 3.5M19 7h2.2a3.3 3.3 0 0 1-3.4 3.5M12 15v3.5m-3.5 2.5h7"/></svg><span>Títulos</span><strong>7</strong></li>
+            <li><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="9" r="4.5"/><path d="m9 12.8-2 8 5-2.6 5 2.6-2-8"/></svg><span>Pódios</span><strong>200+</strong></li>
+            <li><svg class="ic" viewBox="0 0 24 24"><path d="m12 3 2.5 5.4 5.9.6-4.4 4 1.2 5.8L12 15.9 6.8 18.8 8 13 3.6 9l5.9-.6L12 3Z"/></svg><span>Vitórias</span><strong>103</strong></li>
+          </ul>
+
+          <a href="#" class="btn btn-ghost btn-more"><span>Saiba mais</span><span class="arrow-cell"><svg class="ic" viewBox="0 0 24 24"><path d="M4 12h15M13 5.5 19.5 12 13 18.5"/></svg></span></a>
+        </article>
+
+        <!-- Foto piloto 2 -->
+        <figure class="driver-photo right" id="photoRight" data-pending-label="Imagem oficial pendente">
+          <img src="https://media.formula1.com/content/dam/fom-website/drivers/L/LEWHAM01_Lewis_Hamilton/lewham01.png"
+               alt="Lewis Hamilton — foto oficial Formula1.com" loading="lazy">
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CAMPEONATO (+ grid/resultado no fim de semana) ============ -->
+  <section class="standings-section" id="campeonato">
+    <div class="standings-layout" id="standingsLayout">
+
+      <!-- Grid de largada / resultado (só quando há dados de corrida) -->
+      <div class="hub-block grid-block" id="hubStartGrid" hidden>
+        <h3 class="hub-title"><span class="slashes" aria-hidden="true">//</span><span id="gridTitle">Grid de largada</span></h3>
+        <ol class="start-grid" id="startGrid"></ol>
+      </div>
+
+      <!-- Campeonato -->
+      <div class="standings-panel" id="standingsPanel">
+        <div class="standings-top">
+          <h2 class="hub-title" id="champTitle">Campeonato 2026</h2>
+          <div class="champ-tabs">
+            <button type="button" class="active" id="tabDrivers" data-i18n="tab_drivers">Pilotos</button>
+            <button type="button" id="tabCtors" data-i18n="tab_ctors">Construtores</button>
+          </div>
+        </div>
+
+        <div class="standings-thead">
+          <span id="thPos">Pos</span>
+          <span id="thName">Piloto</span>
+          <span id="thTeam">Equipe</span>
+          <span id="thPts">Pts</span>
+        </div>
+
+        <ul class="champ-list" id="champList"></ul>
+
+        <button type="button" class="btn champ-more" id="champMore">
+          <span data-i18n="btn_full">Ver classificação completa</span>
+          <svg class="ic" viewBox="0 0 24 24"><path d="M4 12h15M13 5.5 19.5 12 13 18.5"/></svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CALENDÁRIO ============ -->
+  <section class="calendar-section" id="calendario">
+    <div class="cal-grid">
+      <div class="cal-left">
+
+        <!-- topo: título + mapa -->
+        <div class="cal-top">
+          <div class="cal-intro">
+            <h2 class="cal-title"><span class="slashes" aria-hidden="true">///</span><span id="calTitle">Calendário 2026</span></h2>
+            <p class="cal-sub" id="calSub">24 corridas • 6 continentes • 1 campeão</p>
+
+            <ul class="cal-kpis">
+              <li>
+                <svg class="ic" viewBox="0 0 24 24"><path d="M5 21V4m0 0c2.5-1.6 5-1.6 7.5 0S17.5 5.6 20 4v9c-2.5 1.6-5 1.6-7.5 0S7.5 11.4 5 13"/></svg>
+                <div><strong id="kpiDone">—</strong><span id="kpiDoneLbl">GPs concluídos</span></div>
+              </li>
+              <li>
+                <svg class="ic" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 9.5h17M8 2.8V6.2M16 2.8V6.2"/></svg>
+                <div><small id="kpiNextLbl">Próxima corrida</small><strong class="red" id="kpiNext">—</strong><span id="kpiNextDate">—</span></div>
+              </li>
+              <li>
+                <svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.8 2.6 4.2 5.6 4.2 9S14.8 18.4 12 21c-2.8-2.6-4.2-5.6-4.2-9S9.2 5.6 12 3Z"/></svg>
+                <div><strong id="kpiCountries">—</strong><span id="kpiCountriesLbl">Países</span></div>
+              </li>
+            </ul>
+
+            <div class="cal-filters" id="calFilters">
+              <button type="button" class="active" data-filter="all" data-i18n="f_all">Todos</button>
+              <button type="button" data-filter="done" data-i18n="f_done">Concluídos</button>
+              <button type="button" data-filter="next" data-i18n="f_upcoming">Próximos</button>
+            </div>
+          </div>
+
+          <!-- mapa-múndi em canvas + pinos em HTML -->
+          <div class="cal-map" id="calMap">
+            <canvas id="worldCanvas"></canvas>
+            <div class="map-pins" id="mapPins"></div>
+
+            <!-- traçado oficial ao passar o mouse no pino -->
+            <div class="pin-tip" id="pinTip" hidden>
+              <p class="pt-name" id="ptName">—</p>
+              <p class="pt-sub" id="ptSub">—</p>
+              <figure class="pt-map" id="ptMapFig" data-pending-label="Imagem oficial pendente">
+                <img id="ptMapImg" src="" alt="Traçado oficial do circuito — Formula1.com">
+              </figure>
+            </div>
+          </div>
+        </div>
+
+        <!-- grade das corridas -->
+        <div class="cal-body">
+          <h3 class="hub-title"><span class="slashes" aria-hidden="true">//</span><span id="calSeason">Temporada 2026</span></h3>
+          <div class="race-grid" id="raceGrid"></div>
+
+          <ul class="cal-legend">
+            <li><span class="lg-dot done"></span><span data-i18n="st_done">Concluído</span></li>
+            <li><span class="lg-dot next"></span><span data-i18n="st_next">Próxima</span></li>
+            <li><span class="lg-dot"></span><span data-i18n="st_sched">Agendado</span></li>
+            <li><span class="lg-badge">S</span><span data-i18n="st_sprint">Corrida sprint</span></li>
+            <li>
+              <svg class="ic" viewBox="0 0 24 24"><path d="M20 14.5A8.2 8.2 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5Z"/></svg>
+              <span data-i18n="st_night">Corrida noturna</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- barra lateral -->
+      <aside class="cal-side">
+        <div class="hub-block next-race-card">
+          <h3 class="hub-title side" id="sideTitle">Próxima corrida</h3>
+          <figure class="nr-photo" id="nrPhotoFig" data-pending-label="Imagem oficial pendente">
+            <img id="nrPhotoImg" src="" alt="Circuito da próxima corrida — Formula1.com" loading="lazy">
+          </figure>
+          <div class="nr-info">
+            <span class="flag" id="nrFlag"></span>
+            <div>
+              <span class="nr-round" id="nrRound">—</span>
+              <strong class="nr-name" id="nrName">—</strong>
+              <span class="nr-city" id="nrCity">—</span>
+            </div>
+          </div>
+          <p class="nr-date" id="nrDate">—</p>
+          <a href="#" class="btn btn-primary nr-btn">
+            <span data-i18n="btn_gp">Ver detalhes do GP</span>
+            <svg class="ic" viewBox="0 0 24 24"><path d="M4 12h15M13 5.5 19.5 12 13 18.5"/></svg>
+          </a>
+        </div>
+
+        <div class="hub-block season-stats">
+          <h3 class="hub-title side" id="statsTitle">Estatísticas da temporada</h3>
+          <ul class="stats-list" id="seasonStats"></ul>
+        </div>
+
+        <p class="cal-note" data-i18n="cal_note">* Calendário sujeito a alterações pela Fórmula 1.</p>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ EQUIPES ============ -->
+  <section class="teams-section" id="equipes">
+    <header class="teams-head">
+      <h2 class="cal-title"><span class="slashes" aria-hidden="true">///</span><span data-i18n="tm_title">Equipes</span></h2>
+      <p class="cal-sub" id="tmSub">Conheça mais sobre as equipes da Fórmula 1 2026</p>
+    </header>
+
+    <div class="teams-grid">
+      <!-- lista lateral de equipes -->
+      <nav class="teams-list" id="teamsList" aria-label="Equipes"></nav>
+
+      <div class="team-main">
+        <!-- destaque da equipe -->
+        <div class="team-hero" id="teamHero">
+          <div class="th-info">
+            <p class="th-pre" id="tmPre">—</p>
+            <h3 class="th-name" id="tmName">—</h3>
+            <p class="th-base"><span class="flag" id="tmFlag"></span><span id="tmBase">—</span></p>
+            <ul class="th-facts" id="tmFacts"></ul>
+          </div>
+          <figure class="th-car" id="thCarFig" data-pending-label="Imagem oficial pendente">
+            <img id="thCarImg" src="" alt="Carro oficial da equipe — Formula1.com">
+          </figure>
+          <figure class="th-logo" id="thLogoFig" data-pending-label="Imagem oficial pendente">
+            <img id="thLogoImg" src="" alt="Logo oficial da equipe — Formula1.com">
+          </figure>
+        </div>
+
+        <!-- números da temporada -->
+        <ul class="team-kpis" id="teamKpis"></ul>
+        <p class="team-updated" id="teamUpdated">—</p>
+
+        <!-- três cartões -->
+        <div class="team-cards">
+          <div class="hub-block">
+            <h4 class="hub-title side"><span class="slashes" aria-hidden="true">//</span><span data-i18n="tm_drivers">Pilotos</span></h4>
+            <div class="tc-drivers" id="tcDrivers"></div>
+          </div>
+
+          <div class="hub-block">
+            <h4 class="hub-title side">
+              <span class="slashes" aria-hidden="true">//</span>
+              <span data-i18n="tm_car">Carro 2026</span>
+              <em class="tc-chassis" id="tcChassis">—</em>
+            </h4>
+            <figure class="tc-car" id="tcCarFig" data-pending-label="Imagem oficial pendente">
+              <img id="tcCarImg" src="" alt="Carro oficial da equipe — Formula1.com">
+            </figure>
+            <ul class="tc-specs" id="tcSpecs"></ul>
+          </div>
+
+          <div class="hub-block">
+            <h4 class="hub-title side"><span class="slashes" aria-hidden="true">//</span><span data-i18n="tm_perf">Desempenho na temporada</span></h4>
+            <ul class="perf-list" id="perfList"></ul>
+            <p class="perf-note" data-i18n="tm_perf_note">Posição da equipe em cada métrica, entre as 11 do grid.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ============ ESTATÍSTICAS ============ -->
+  <section class="stats-section" id="estatisticas">
+    <div class="stats-layout">
+      <!-- painel lateral -->
+      <aside class="stats-side">
+        <h2 class="ss-title" data-i18n="ss_title">Estatísticas</h2>
+        <p class="ss-season" id="ssSeason">Temporada 2026</p>
+
+        <div class="ss-box">
+          <p class="ss-label" data-i18n="ss_progress">GPs concluídos</p>
+          <p class="ss-progress"><strong id="ssDone">—</strong><span id="ssTotal">/ —</span></p>
+          <div class="ss-bar"><div class="ss-fill" id="ssFill"></div></div>
+        </div>
+
+        <div class="ss-box">
+          <p class="ss-label" data-i18n="ss_last">Última corrida</p>
+          <p class="ss-last" id="ssLast">—</p>
+        </div>
+      </aside>
+
+      <div class="stats-main">
+        <header class="stats-head">
+          <div>
+            <h2 class="cal-title"><span class="slashes" aria-hidden="true">///</span><span id="stTitle">Estatísticas da temporada</span></h2>
+            <p class="cal-sub" data-i18n="st_sub">Números completos de desempenho dos pilotos e equipes</p>
+          </div>
+          <label class="season-pick">
+            <span class="sr-only" data-i18n="st_season">Temporada</span>
+            <select id="statsSeason"></select>
+            <svg class="ic" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+          </label>
+        </header>
+
+        <div class="stats-state" id="statsState" hidden></div>
+
+        <!-- linha 1: rankings -->
+        <div class="stats-row row-4" id="statsTop"></div>
+
+        <!-- linha 2: pontuação -->
+        <div class="stats-row row-3">
+          <div class="hub-block">
+            <h4 class="hub-title side"><span data-i18n="st_pts_driver">Pontuação por piloto</span><em class="col-pts">PTS</em></h4>
+            <ul class="rank-list wide" id="ptsDrivers"></ul>
+          </div>
+
+          <div class="hub-block">
+            <h4 class="hub-title side" data-i18n="st_pts_team">Pontuação por equipe</h4>
+            <div class="donut-wrap">
+              <div class="donut" id="teamDonut">
+                <div class="donut-hole">
+                  <strong id="donutTotal">—</strong>
+                  <small data-i18n="st_points">Pontos</small>
+                </div>
+              </div>
+              <ul class="donut-legend" id="donutLegend"></ul>
+            </div>
+          </div>
+
+          <div class="hub-block">
+            <h4 class="hub-title side">
+              <span data-i18n="st_eff">Eficiência</span>
+              <em class="sub" data-i18n="st_eff_sub">Pontos por corrida</em>
+            </h4>
+            <ul class="rank-list" id="effList"></ul>
+          </div>
+        </div>
+
+        <!-- linha 3: por equipe + fim de corrida -->
+        <div class="stats-row row-3">
+          <div class="hub-block">
+            <h4 class="hub-title side" data-i18n="st_wins_team">Vitórias por equipe</h4>
+            <ul class="rank-list" id="winsTeam"></ul>
+          </div>
+          <div class="hub-block">
+            <h4 class="hub-title side" data-i18n="st_pod_team">Pódios por equipe</h4>
+            <ul class="rank-list" id="podTeam"></ul>
+          </div>
+          <div class="hub-block">
+            <h4 class="hub-title side">
+              <span data-i18n="st_status">Fim de corrida</span>
+              <em class="sub" data-i18n="st_status_sub">Resultados por classificação</em>
+            </h4>
+            <ul class="rank-list" id="statusList"></ul>
+          </div>
+        </div>
+
+        <p class="stats-note" id="statsNote">—</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ POP-UP DO PILOTO ============ -->
+  <div class="modal-backdrop" id="driverModal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="mdName">
+      <button class="modal-close" id="modalClose" type="button" aria-label="Fechar">
+        <svg class="ic" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg>
+      </button>
+
+      <div class="modal-body">
+        <div class="modal-info">
+          <header class="modal-head">
+            <span class="modal-num" id="mdNum">44</span>
+            <div>
+              <h3 class="modal-name" id="mdName">Lewis Hamilton</h3>
+              <p class="modal-team" id="mdTeam">Scuderia Ferrari</p>
+            </div>
+          </header>
+
+          <div class="modal-chips">
+            <span class="modal-chip" id="mdCountry"><span class="flag"></span>Reino Unido</span>
+            <span class="modal-chip" id="mdBirth">Nascimento — 07 Jan 1985</span>
+          </div>
+
+          <p class="modal-sec" data-i18n="md_career">Carreira</p>
+          <ul class="modal-grid" id="mdCareer"></ul>
+
+          <p class="modal-sec" data-i18n="md_season">Temporada 2026</p>
+          <ul class="modal-grid season" id="mdSeason"></ul>
+
+          <a class="btn btn-primary modal-link" id="mdLink" href="#" target="_blank" rel="noopener">
+            <span data-i18n="md_link">Perfil oficial em Formula1.com</span>
+            <svg class="ic" viewBox="0 0 24 24"><path d="M4 12h15M13 5.5 19.5 12 13 18.5"/></svg>
+          </a>
+        </div>
+
+        <figure class="modal-photo" id="mdPhotoFig" data-pending-label="Imagem oficial pendente">
+          <img id="mdPhotoImg" src="" alt="Foto oficial do piloto — Formula1.com">
+        </figure>
+      </div>
+    </div>
+  </div>
+
+  <script src="official-data.js"></script>
+  <script src="teams-data.js"></script>
+  <script src="world-map-data.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
