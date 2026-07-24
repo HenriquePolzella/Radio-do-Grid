@@ -90,7 +90,8 @@
       <!-- Coluna central: contagem regressiva -->
       <div class="hero-center">
         <div class="countdown-wrap">
-          <p class="countdown-label"><span class="rule" aria-hidden="true"></span><span data-i18n="countdown_label">Largada em</span><span class="rule" aria-hidden="true"></span></p>
+          <ol class="wk-stepper" id="wkStepper" hidden></ol>
+          <p class="countdown-label"><span class="rule" aria-hidden="true"></span><span id="cdLabel">Largada em</span><span class="rule" aria-hidden="true"></span></p>
           <div class="countdown" id="countdown">
             <div class="count-box"><span class="count-num" id="cdDays">12</span><span class="count-unit" data-i18n="u_days">Dias</span></div>
             <span class="count-sep" aria-hidden="true">:</span>
@@ -107,7 +108,7 @@
           <div class="live-badge" id="liveBadge" hidden>
             <span class="live-dot" aria-hidden="true"></span>
             <strong data-i18n="live">Ao vivo</strong>
-            <em data-i18n="live_sub">Corrida em andamento</em>
+            <em id="liveSub" data-i18n="live_sub">Corrida em andamento</em>
           </div>
         </div>
       </div>
@@ -156,6 +157,24 @@
   <section class="race-hub">
     <div class="hub-grid" id="hubGridWrap">
       <div class="hub-main" id="hubMain">
+
+        <!-- Fim de semana de GP: última sessão (com fotos) -->
+        <div class="hub-block live-session" id="hubLive" hidden>
+          <h3 class="hub-title">
+            <span class="slashes" aria-hidden="true">//</span>
+            <span id="liveSessTitle">Última sessão</span>
+            <span class="live-tag" id="liveSessTag" hidden><span class="live-dot"></span>Ao vivo</span>
+            <span class="live-lap" id="liveSessLap"></span>
+          </h3>
+          <div class="sess-tabs" id="sessTabs" role="tablist" aria-label="Sessões"></div>
+          <ol class="live-times" id="liveTimes"></ol>
+        </div>
+
+        <!-- Fim de semana de GP: dados de acompanhamento (vira pole após a Q) -->
+        <div class="hub-block" id="hubTracking" hidden>
+          <h3 class="hub-title"><span class="slashes" aria-hidden="true">//</span><span id="trackingTitle">Acompanhamento</span></h3>
+          <div id="trackingBody"></div>
+        </div>
 
         <!-- Modo programação: histórico + recordes -->
         <div class="hub-block" id="hubHistory">
