@@ -183,6 +183,13 @@
       s_fp1: "Treino Livre 1", s_fp2: "Treino Livre 2", s_fp3: "Treino Livre 3",
       s_sq: "Classificatória Sprint", s_sprint: "Corrida Sprint", s_quali: "Classificação", s_race: "Corrida",
       live: "Ao vivo", live_sub: "Corrida em andamento",
+      wk_last: "Última sessão", wk_lap: "Volta {n}",
+      sess_line: "{s} · {d}, {t} (Brasília)",
+      trk_title: "Acompanhamento", trk_fast: "Volta mais rápida", trk_pole: "Pole position",
+      trk_cond: "Condições da pista", trk_air: "Ar", trk_track: "Pista", trk_wind: "Vento",
+      trk_events: "Na sessão", trk_no_ev: "Sem incidentes até agora", trk_stopped: "Carro parado",
+      rc_green: "Bandeira verde", rc_yellow: "Bandeira amarela", rc_red: "Bandeira vermelha",
+      rc_chequered: "Bandeira quadriculada", rc_sc: "Safety Car", rc_vsc: "Virtual Safety Car",
       cal_title: "Calendário {y}", cal_season: "Temporada {y}",
       cal_sub: "{n} corridas • {c} continentes • 1 campeão",
       kpi_done: "GPs concluídos", kpi_next: "Próxima corrida", kpi_countries: "Países",
@@ -261,6 +268,13 @@
       s_fp1: "Practice 1", s_fp2: "Practice 2", s_fp3: "Practice 3",
       s_sq: "Sprint Qualifying", s_sprint: "Sprint", s_quali: "Qualifying", s_race: "Race",
       live: "Live", live_sub: "Race in progress",
+      wk_last: "Last session", wk_lap: "Lap {n}",
+      sess_line: "{s} · {d}, {t} (Brasília time)",
+      trk_title: "Live tracking", trk_fast: "Fastest lap", trk_pole: "Pole position",
+      trk_cond: "Track conditions", trk_air: "Air", trk_track: "Track", trk_wind: "Wind",
+      trk_events: "In the session", trk_no_ev: "No incidents so far", trk_stopped: "Car stopped",
+      rc_green: "Green flag", rc_yellow: "Yellow flag", rc_red: "Red flag",
+      rc_chequered: "Chequered flag", rc_sc: "Safety Car", rc_vsc: "Virtual Safety Car",
       cal_title: "{y} Calendar", cal_season: "{y} Season",
       cal_sub: "{n} races • {c} continents • 1 champion",
       kpi_done: "GPs completed", kpi_next: "Next race", kpi_countries: "Countries",
@@ -339,6 +353,13 @@
       s_fp1: "Práctica Libre 1", s_fp2: "Práctica Libre 2", s_fp3: "Práctica Libre 3",
       s_sq: "Clasificación Sprint", s_sprint: "Sprint", s_quali: "Clasificación", s_race: "Carrera",
       live: "En vivo", live_sub: "Carrera en curso",
+      wk_last: "Última sesión", wk_lap: "Vuelta {n}",
+      sess_line: "{s} · {d}, {t} (Brasília)",
+      trk_title: "Seguimiento", trk_fast: "Vuelta más rápida", trk_pole: "Pole position",
+      trk_cond: "Condiciones de pista", trk_air: "Aire", trk_track: "Pista", trk_wind: "Viento",
+      trk_events: "En la sesión", trk_no_ev: "Sin incidentes por ahora", trk_stopped: "Coche detenido",
+      rc_green: "Bandera verde", rc_yellow: "Bandera amarilla", rc_red: "Bandera roja",
+      rc_chequered: "Bandera a cuadros", rc_sc: "Safety Car", rc_vsc: "Virtual Safety Car",
       cal_title: "Calendario {y}", cal_season: "Temporada {y}",
       cal_sub: "{n} carreras • {c} continentes • 1 campeón",
       kpi_done: "GPs disputados", kpi_next: "Próxima carrera", kpi_countries: "Países",
@@ -478,29 +499,376 @@
     return urls;
   }
 
-  /* ---------------- Contagem regressiva ---------------- */
+  /* ---------------- Contagem regressiva + fim de semana ---------------- */
   var raceStart = new Date("2026-11-08T14:00:00-03:00").getTime(); // fallback: GP de São Paulo
 
-  function tick() {
-    var diff = Math.max(0, raceStart - Date.now());
-    var secs = Math.floor(diff / 1000);
-    $("cdDays").textContent = pad(Math.floor(secs / 86400));
-    $("cdHours").textContent = pad(Math.floor((secs % 86400) / 3600));
-    $("cdMins").textContent = pad(Math.floor((secs % 3600) / 60));
-    $("cdSecs").textContent = pad(secs % 60);
+  /* duração estimada de cada sessão (min) — só para detectar "ao vivo" */
+  var SESSION_DUR = {
+    FirstPractice: 65, SecondPractice: 65, ThirdPractice: 65,
+    SprintQualifying: 55, Sprint: 70, Qualifying: 75, Race: 180
+  };
+  var SESSION_LABEL = {
+    FirstPractice: "s_fp1", SecondPractice: "s_fp2", ThirdPractice: "s_fp3",
+    SprintQualifying: "s_sq", Sprint: "s_sprint", Qualifying: "s_quali", Race: "s_race"
+  };
+  var SESSION_SHORT = {
+    s_fp1: ["TL1", "FP1"], s_fp2: ["TL2", "FP2"], s_fp3: ["TL3", "FP3"],
+    s_sq: ["SQ", "SQ"], s_sprint: ["SPR", "SPR"], s_quali: ["Q", "Q"], s_race: ["GP", "GP"]
+  };
+  function shortLabel(labelKey) {
+    var s = SESSION_SHORT[labelKey] || ["", ""];
+    return LANG === "en" ? s[1] : s[0];
+  }
 
-    /* janela da corrida (~3h): troca o countdown pelo selo AO VIVO */
-    var inRace = raceStart > 0 && Date.now() >= raceStart && Date.now() <= raceStart + 3 * 3600e3;
-    var badge = $("liveBadge");
-    if (badge && badge.hidden === inRace) {
-      badge.hidden = !inRace;
-      $("countdown").style.display = inRace ? "none" : "";
-      var lbl = document.querySelector(".countdown-label");
-      if (lbl) lbl.style.display = inRace ? "none" : "";
+  /* lista ordenada das sessões do GP atual, a partir do calendário (Jolpica) */
+  function weekendSessions() {
+    if (!lastRace) return [];
+    var out = [];
+    ["FirstPractice", "SecondPractice", "ThirdPractice", "SprintQualifying", "Sprint", "Qualifying"]
+      .forEach(function (key) {
+        var s = lastRace[key];
+        if (s && s.date) {
+          var start = new Date(s.date + "T" + (s.time || "12:00:00Z")).getTime();
+          out.push({ key: key, labelKey: SESSION_LABEL[key], start: start, end: start + SESSION_DUR[key] * 60000 });
+        }
+      });
+    var rs = new Date(lastRace.date + "T" + (lastRace.time || "14:00:00Z")).getTime();
+    out.push({ key: "Race", labelKey: "s_race", start: rs, end: rs + SESSION_DUR.Race * 60000 });
+    out.sort(function (a, b) { return a.start - b.start; });
+    return out;
+  }
+
+  /* estado do fim de semana: pre (conta p/ corrida) · waiting · live */
+  function weekendState() {
+    var s = weekendSessions();
+    if (!s.length) return { mode: "pre", all: s };
+    var now = Date.now();
+    if (now < s[0].start - 4 * 3600e3 || now > s[s.length - 1].end) return { mode: "pre", all: s };
+    for (var i = 0; i < s.length; i++) {
+      if (now >= s[i].start && now <= s[i].end) return { mode: "live", session: s[i], index: i, all: s };
     }
+    for (var j = 0; j < s.length; j++) {
+      if (s[j].start > now) return { mode: "waiting", session: s[j], prev: j > 0 ? s[j - 1] : null, index: j, all: s };
+    }
+    return { mode: "pre", all: s };
+  }
+
+  function renderStepper(ws) {
+    var el = $("wkStepper");
+    if (!el) return;
+    if (ws.mode === "pre") { el.hidden = true; return; }
+    var now = Date.now();
+    el.hidden = false;
+    el.innerHTML = ws.all.map(function (s) {
+      var cls = (now > s.end) ? "done" : (now >= s.start && now <= s.end ? "live"
+        : (ws.session && s === ws.session ? "next" : "up"));
+      return '<li class="' + cls + '"><span class="dot"></span>' + shortLabel(s.labelKey) + "</li>";
+    }).join("");
+  }
+
+  function tick() {
+    var ws = weekendState();
+    var target, live = null;
+
+    if (ws.mode === "live") { live = ws.session; }
+    else if (ws.mode === "waiting") { target = ws.session.start; }
+    else { target = raceStart; }
+
+    if (!live) {
+      var diff = Math.max(0, target - Date.now());
+      var secs = Math.floor(diff / 1000);
+      $("cdDays").textContent = pad(Math.floor(secs / 86400));
+      $("cdHours").textContent = pad(Math.floor((secs % 86400) / 3600));
+      $("cdMins").textContent = pad(Math.floor((secs % 3600) / 60));
+      $("cdSecs").textContent = pad(secs % 60);
+    }
+
+    /* rótulo + selo ao vivo conforme o estado */
+    var badge = $("liveBadge");
+    var inLive = !!live;
+    if (badge.hidden === inLive) {
+      badge.hidden = !inLive;
+      $("countdown").style.display = inLive ? "none" : "";
+      $("cdLabel").parentNode.style.display = inLive ? "none" : "";
+    }
+
+    /* atualiza textos só quando o estado muda (evita reflow a cada segundo) */
+    var stamp = ws.mode + "|" + (ws.session ? ws.session.key : "") + "|" + LANG;
+    if (tick._stamp !== stamp) {
+      tick._stamp = stamp;
+      var wrap = document.querySelector(".countdown-wrap");
+      wrap.classList.toggle("weekend", ws.mode !== "pre");
+
+      if (ws.mode === "waiting") {
+        $("cdLabel").textContent = t(ws.session.labelKey);
+        /* timestamp UTC → horário de Brasília */
+        var d = new Date(new Date(ws.session.start).toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+        $("raceTimeText").textContent = t("sess_line")
+          .replace("{s}", t(ws.session.labelKey)).replace("{d}", W()[d.getDay()]).replace("{t}", fmtTime(d));
+      } else if (ws.mode === "live") {
+        $("liveSub").textContent = t(ws.session.labelKey);
+      } else {
+        $("cdLabel").textContent = t("countdown_label");
+      }
+      renderStepper(ws);
+      if (ws.mode !== "pre") loadLiveSession();
+      else weekendHub(false);
+    }
+
+    /* durante uma sessão ao vivo, atualiza os tempos a cada ~45s */
+    if (ws.mode !== "pre" && Date.now() - liveCache.ts > 45000) loadLiveSession();
   }
   tick();
   setInterval(tick, 1000);
+
+  /* ---------------- Tempos ao vivo da sessão (OpenF1) ----------------
+     Só durante um fim de semana de GP. CORS aberto; dados oficiais de
+     cronometragem repassados pela OpenF1 (api.openf1.org). */
+  var OPENF1 = "https://api.openf1.org/v1";
+  var liveCache = { ts: 0 };
+  var OF1_NAME = {
+    "Practice 1": "s_fp1", "Practice 2": "s_fp2", "Practice 3": "s_fp3",
+    "Qualifying": "s_quali", "Sprint": "s_sprint", "Sprint Qualifying": "s_sq", "Race": "s_race"
+  };
+
+  function fmtLap(s) {
+    var m = Math.floor(s / 60), r = (s - m * 60).toFixed(3);
+    return m + ":" + (r < 10 ? "0" : "") + r;
+  }
+
+  /* alterna o hub entre modo normal (histórico+recordes) e modo GP (sessão+dados) */
+  function weekendHub(on) {
+    if (!$("hubLive")) return;
+    $("hubHistory").hidden = on;
+    $("hubRecords").hidden = on;
+    $("hubLive").hidden = !on;
+    $("hubTracking").hidden = !on;
+  }
+
+  /* OpenF1 bloqueada (sessão ao vivo no plano grátis) ou sem dados:
+     restaura a última sessão concluída do cache; senão, hub normal. */
+  function blockedFallback() {
+    if (liveCache.shown) return;               /* já há dados na tela */
+    if (!restoreLiveCache()) weekendHub(false);
+  }
+
+  /* sessões do fim de semana + qual está selecionada */
+  var weekendSess = { meeting: null, list: [], selManual: null };
+
+  function sessFrom(x) {
+    return {
+      key: x.session_key, name: x.session_name, labelKey: OF1_NAME[x.session_name],
+      start: new Date(x.date_start).getTime(), end: new Date(x.date_end).getTime()
+    };
+  }
+  /* uma tentativa extra em caso de 429, sem bloquear as outras chamadas */
+  function getRetry(url) {
+    return getJSON(url).catch(function () {
+      return new Promise(function (r) { setTimeout(r, 700); })
+        .then(function () { return getJSON(url); }).catch(function () { return null; });
+    });
+  }
+
+  function loadLiveSession() {
+    if (!$("hubLive") || !lastRace) return;
+    liveCache.ts = Date.now();
+
+    getJSON(OPENF1 + "/sessions?session_key=latest").then(function (arr) {
+      if (!Array.isArray(arr) || !arr[0]) { blockedFallback(); return; }
+      var s = arr[0];
+      /* pertence a este fim de semana? (data próxima da corrida) */
+      var raceDay = new Date(lastRace.date + "T12:00:00Z").getTime();
+      if (Math.abs(new Date(s.date_start).getTime() - raceDay) > 4 * 864e5) { blockedFallback(); return; }
+
+      /* alvo: seleção manual (se já temos a lista) ou a própria "latest" (mais recente) */
+      var target = (weekendSess.selManual && weekendSess.list.length &&
+        weekendSess.list.filter(function (x) { return x.key === weekendSess.selManual; })[0]) || sessFrom(s);
+
+      /* carrega os dados do alvo — pinta o card já (não espera a lista de tabs) */
+      loadSessionData(target);
+
+      /* lista de sessões p/ os tabs, EM PARALELO (cache por meeting) */
+      if (weekendSess.meeting === s.meeting_key && weekendSess.list.length) {
+        renderSessionTabs(target);
+      } else {
+        getJSON(OPENF1 + "/sessions?meeting_key=" + s.meeting_key).then(function (all) {
+          if (!Array.isArray(all) || !all.length) { renderSessionTabs(target); return; }
+          weekendSess.meeting = s.meeting_key;
+          weekendSess.list = all.map(sessFrom).sort(function (a, b) { return a.start - b.start; });
+          var sel = weekendSess.list.filter(function (x) {
+            return x.key === (weekendSess.selManual || target.key);
+          })[0] || target;
+          renderSessionTabs(sel);
+        }).catch(function () { renderSessionTabs(target); });
+      }
+    }).catch(blockedFallback);
+  }
+
+  function loadSessionData(sess) {
+    var isLive = Date.now() >= sess.start && Date.now() <= sess.end;
+    /* 4 chamadas EM PARALELO (com retry no 429) — muito mais rápido que em série */
+    return Promise.all([
+      getRetry(OPENF1 + "/laps?session_key=" + sess.key),
+      getRetry(OPENF1 + "/drivers?session_key=" + sess.key),
+      getRetry(OPENF1 + "/weather?session_key=" + sess.key),
+      getRetry(OPENF1 + "/race_control?session_key=" + sess.key)
+    ]).then(function (r) {
+      function arr(x) { return Array.isArray(x) ? x : []; }
+      renderWeekendHub(sess, arr(r[0]), arr(r[1]), arr(r[2]), arr(r[3]), isLive);
+    });
+  }
+
+  /* botões TL1/TL2/TL3/Q/GP — futuras ficam desabilitadas */
+  function renderSessionTabs(sel) {
+    var now = Date.now();
+    $("sessTabs").innerHTML = weekendSess.list.map(function (x) {
+      var sl = x.labelKey ? shortLabel(x.labelKey) : (x.name || "").slice(0, 3).toUpperCase();
+      return '<button type="button" data-key="' + x.key + '"' +
+        (x.start > now ? " disabled" : "") + (x.key === sel.key ? ' class="active"' : "") +
+        ">" + sl + "</button>";
+    }).join("");
+  }
+
+  $("sessTabs").addEventListener("click", function (ev) {
+    var b = ev.target.closest("button[data-key]");
+    if (!b || b.disabled) return;
+    weekendSess.selManual = parseInt(b.getAttribute("data-key"), 10);
+    var sel = weekendSess.list.filter(function (x) { return x.key === weekendSess.selManual; })[0];
+    if (sel) { renderSessionTabs(sel); loadSessionData(sel); }
+  });
+
+  function renderWeekendHub(sess, laps, drivers, weather, rc, isLive) {
+    var dmap = {};
+    drivers.forEach(function (d) {
+      dmap[d.driver_number] = {
+        name: d.full_name, acr: d.name_acronym, team: d.team_name,
+        color: d.team_colour ? "#" + d.team_colour : "#E10600",
+        photo: d.headshot_url || ""
+      };
+    });
+    var best = {}, maxLap = 0;
+    laps.forEach(function (l) {
+      if (l.lap_number > maxLap) maxLap = l.lap_number;
+      if (l.lap_duration && (!best[l.driver_number] || l.lap_duration < best[l.driver_number])) {
+        best[l.driver_number] = l.lap_duration;
+      }
+    });
+    var rows = Object.keys(best).map(function (n) { return { n: n, t: best[n], d: dmap[n] || {} }; })
+      .sort(function (a, b) { return a.t - b.t; });
+    if (!rows.length) { blockedFallback(); return; }
+
+    weekendHub(true);
+    liveCache.shown = true;
+    var lk = sess.labelKey || OF1_NAME[sess.session_name];
+
+    /* ---- card 1: última sessão (com foto) ---- */
+    $("liveSessTitle").textContent = t("wk_last") + (lk ? " · " + t(lk) : "");
+    $("liveSessTag").hidden = !isLive;
+    $("liveSessLap").textContent = (isLive && maxLap) ? t("wk_lap").replace("{n}", maxLap) : "";
+    var p1 = rows[0].t;
+    $("liveTimes").innerHTML = rows.slice(0, 5).map(function (r, i) {
+      var nm = r.d.name || r.d.acr || ("#" + r.n);
+      var ph = r.d.photo
+        ? '<img src="' + r.d.photo + '" alt="" loading="lazy" onerror="this.remove()">' : "";
+      return '<li style="--pos-team:' + (r.d.color || "#E10600") + '">' +
+        '<span class="lt-pos">' + (i + 1) + "</span>" +
+        '<span class="lt-photo">' + ph + "</span>" +
+        '<span class="lt-name">' + nm + "<small>" + (r.d.team || "") + "</small></span>" +
+        '<span class="lt-time">' + fmtLap(r.t) + "</span>" +
+        '<span class="lt-gap">' + (i === 0 ? "" : "+" + (r.t - p1).toFixed(3)) + "</span></li>";
+    }).join("");
+
+    renderTracking(sess, rows[0], weather, rc, isLive, lk);
+    saveLiveCache();
+  }
+
+  /* guarda a última sessão renderizada — durante uma sessão AO VIVO a OpenF1
+     bloqueia tudo, então mostramos essa cópia (a última concluída) do cache. */
+  function saveLiveCache() {
+    try {
+      localStorage.setItem("f1t-live", JSON.stringify({
+        raceDate: lastRace.date,
+        liveTitle: $("liveSessTitle").textContent,
+        liveLap: $("liveSessLap").textContent,
+        sessTabs: $("sessTabs").innerHTML,
+        liveTimes: $("liveTimes").innerHTML,
+        trackingTitle: $("trackingTitle").textContent,
+        trackingBody: $("trackingBody").innerHTML
+      }));
+    } catch (e) {}
+  }
+
+  function restoreLiveCache() {
+    try {
+      var c = JSON.parse(localStorage.getItem("f1t-live") || "null");
+      if (!c || !lastRace || c.raceDate !== lastRace.date) return false;
+      $("liveSessTitle").textContent = c.liveTitle;
+      $("liveSessTag").hidden = true;      /* cache = sessão já encerrada */
+      $("liveSessLap").textContent = c.liveLap;
+      if (c.sessTabs) $("sessTabs").innerHTML = c.sessTabs;
+      $("liveTimes").innerHTML = c.liveTimes;
+      $("trackingTitle").textContent = c.trackingTitle;
+      $("trackingBody").innerHTML = c.trackingBody;
+      weekendHub(true);
+      liveCache.shown = true;
+      return true;
+    } catch (e) { return false; }
+  }
+
+  /* ---- card 2: acompanhamento (mais rápido / pole após a Q + condições + eventos) ---- */
+  function renderTracking(sess, leader, weather, rc, isLive, lk) {
+    var isQuali = (lk === "s_quali" || lk === "s_sq");
+    var showPole = isQuali && !isLive;
+    $("trackingTitle").textContent = t("trk_title");
+
+    var html = "";
+
+    /* destaque: volta mais rápida ou pole */
+    var ld = leader.d || {};
+    html += '<div class="trk-hero" style="--pos-team:' + (ld.color || "#E10600") + '">' +
+      "<small>" + (showPole ? t("trk_pole") : t("trk_fast")) + "</small>" +
+      "<strong>" + (ld.name || ld.acr || ("#" + leader.n)) + "</strong>" +
+      "<span>" + fmtLap(leader.t) + " · " + (ld.team || "") + "</span></div>";
+
+    /* condições da pista */
+    var w = weather.length ? weather[weather.length - 1] : null;
+    if (w) {
+      html += '<p class="trk-sec">' + t("trk_cond") + "</p>" +
+        '<ul class="trk-cond">' +
+          "<li><small>" + t("trk_air") + "</small><strong>" + Math.round(w.air_temperature) + "°C</strong></li>" +
+          "<li><small>" + t("trk_track") + "</small><strong>" + Math.round(w.track_temperature) + "°C</strong></li>" +
+          "<li><small>" + t("trk_wind") + "</small><strong>" + w.wind_speed.toFixed(1) + " km/h</strong></li>" +
+        "</ul>";
+    }
+
+    /* eventos da sessão (bandeiras, safety car, carros parados) */
+    var ev = trackingEvents(rc);
+    html += '<p class="trk-sec">' + t("trk_events") + "</p>";
+    html += ev.length
+      ? '<ul class="trk-events">' + ev.join("") + "</ul>"
+      : '<p class="trk-empty">' + t("trk_no_ev") + "</p>";
+
+    $("trackingBody").innerHTML = html;
+  }
+
+  function trackingEvents(rc) {
+    var out = [], lastLabel = null;
+    for (var i = rc.length - 1; i >= 0 && out.length < 4; i--) {
+      var e = rc[i], label = null, cls = "y";
+      if (e.category === "SafetyCar") {
+        label = /VIRTUAL/i.test(e.message || "") ? t("rc_vsc") : t("rc_sc"); cls = "y";
+      } else if (e.flag === "RED") { label = t("rc_red"); cls = "r"; }
+      else if (e.flag === "YELLOW" || e.flag === "DOUBLE YELLOW") { label = t("rc_yellow"); cls = "y"; }
+      else if (e.flag === "CHEQUERED") { label = t("rc_chequered"); cls = "g"; }
+      else if (e.flag === "GREEN") { label = t("rc_green"); cls = "g"; }
+      else if (/STOPPED|RETIRE/i.test(e.message || "")) { label = t("trk_stopped"); cls = "r"; }
+      if (!label || label === lastLabel) continue;   /* pula repetidos em sequência */
+      lastLabel = label;
+      out.push('<li class="ev-' + cls + '"><span class="ev-dot"></span><span class="ev-txt">' +
+        label + "</span><span class=\"ev-lap\"></span></li>");
+    }
+    return out;
+  }
 
   /* ---------------- Fundo do hero ---------------- */
   function setHeroBg(hubName) {
@@ -582,6 +950,10 @@
       : null);
 
     setHeroBg((c.hub || c.asset || loc.country).replace(/_/g, " "));
+
+    /* re-aplica o estado do fim de semana (pode sobrepor a linha da corrida) */
+    tick._stamp = null;
+    tick();
   }
 
   /* ---------------- Ficha oficial do piloto ---------------- */
