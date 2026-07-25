@@ -1051,6 +1051,39 @@
     return f && f.pos === 1 ? String(f.count) : "0";
   }
 
+  /* vitórias e pódios de CARREIRA ao vivo (Jolpica), só p/ os 2 pilotos visíveis.
+     O snapshot pinta na hora; isto corrige para o número atual. Cache por piloto. */
+  var careerCache = {};
+  function careerStats(driverId) {
+    if (careerCache[driverId]) return Promise.resolve(careerCache[driverId]);
+    var base = API + "/drivers/" + driverId + "/results/";
+    return Promise.all([
+      getRetry(base + "1.json?limit=1"),
+      getRetry(base + "2.json?limit=1"),
+      getRetry(base + "3.json?limit=1")
+    ]).then(function (r) {
+      function tot(j) { return (j && j.MRData) ? (parseInt(j.MRData.total, 10) || 0) : null; }
+      var w = tot(r[0]);
+      if (w === null) return null;                 /* falhou → mantém snapshot */
+      var out = { wins: w, podiums: w + (tot(r[1]) || 0) + (tot(r[2]) || 0) };
+      careerCache[driverId] = out;
+      return out;
+    }).catch(function () { return null; });
+  }
+
+  /* stats de TEMPORADA do piloto ao vivo (classificação Jolpica + statsCache) */
+  function liveDriverSeason(driverId) {
+    var out = {};
+    var dv = (hub.drivers || []).filter(function (s) { return s.Driver.driverId === driverId; })[0];
+    if (dv) { out.pos = dv.position; out.pts = dv.points; out.wins = dv.wins; }
+    var st = statsCache[SEASON];
+    if (st) {
+      var podRes = [].concat(st.p1, st.p2, st.p3).map(function (r) { return r.Results[0]; });
+      out.podiums = String(podRes.filter(function (r) { return r.Driver && r.Driver.driverId === driverId; }).length);
+    }
+    return out;
+  }
+
   /* "14/10/2004" -> "14 Out 2004" (no idioma atual) */
   function fmtDOB(s) {
     var m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s || "");
@@ -1104,14 +1137,23 @@
       '<ul class="driver-stats">' +
         statRow(IC.cal, t("d_dob"), dobTxt) +
         statRow(IC.trophy, t("d_titles"), o ? o.wc : "—") +
-        statRow(IC.medal, t("d_podiums"), o ? o.pod : "—") +
-        statRow(IC.star, t("d_wins"), o ? careerWins(o) : "—") +
+        statRow(IC.medal, t("d_podiums"), o ? o.pod : "—", "pod-" + d.driverId) +
+        statRow(IC.star, t("d_wins"), o ? careerWins(o) : "—", "win-" + d.driverId) +
       "</ul>" +
       '<a href="#" class="btn btn-ghost btn-more"><span>' + t("btn_more") + '</span><span class="arrow-cell">' + IC.arrow + "</span></a>";
 
     cardEl.querySelector(".btn-more").addEventListener("click", function (ev) {
       ev.preventDefault();
       openModal(st);
+    });
+
+    /* atualiza pódios/vitórias de carreira com o número ao vivo */
+    careerStats(d.driverId).then(function (cs) {
+      if (!cs) return;
+      var pod = cardEl.querySelector('[data-slot="pod-' + d.driverId + '"]');
+      var win = cardEl.querySelector('[data-slot="win-' + d.driverId + '"]');
+      if (pod) pod.textContent = cs.podiums;
+      if (win) win.textContent = cs.wins;
     });
   }
 
@@ -1178,17 +1220,24 @@
     $("mdBirth").textContent = t("md_born") + " — " + (o ? fmtDOB(o.dob) : d.dateOfBirth) +
       (o && o.pob ? " · " + o.pob : "");
 
+    /* carreira: vitórias/pódios ao vivo se já em cache (o card busca ao abrir a equipe) */
+    var cc = careerCache[d.driverId];
     $("mdCareer").innerHTML = o
       ? gridRow(t("md_gps"), o.gps) + gridRow(t("md_titles"), o.wc) +
-        gridRow(t("md_wins"), careerWins(o)) + gridRow(t("md_podiums"), o.pod) +
+        gridRow(t("md_wins"), cc ? cc.wins : careerWins(o)) +
+        gridRow(t("md_podiums"), cc ? cc.podiums : o.pod) +
         gridRow(t("md_poles"), o.pole) + gridRow(t("md_points"), o.pts) +
         gridRow(t("md_best_finish"), fmtFinish(o.hf)) + gridRow(t("md_best_grid"), fmtFinish(o.hg))
       : gridRow("—", "—");
 
-    $("mdSeason").innerHTML = o
-      ? gridRow(t("md_pos"), fmtPos(o.sPos)) + gridRow(t("md_points"), o.sPts) +
-        gridRow(t("md_wins"), o.sWin) + gridRow(t("md_podiums"), o.sPod)
-      : gridRow("—", "—");
+    /* temporada: ao vivo (Jolpica) com fallback pro snapshot */
+    var ls = liveDriverSeason(d.driverId);
+    function sv(a, b) { return (a === null || a === undefined) ? b : a; }
+    $("mdSeason").innerHTML =
+      gridRow(t("md_pos"), fmtPos(sv(ls.pos, o ? o.sPos : "—"))) +
+      gridRow(t("md_points"), sv(ls.pts, o ? o.sPts : "—")) +
+      gridRow(t("md_wins"), sv(ls.wins, o ? o.sWin : "—")) +
+      gridRow(t("md_podiums"), sv(ls.podiums, o ? o.sPod : "—"));
 
     if (o && o.slug) {
       $("mdLink").href = "https://www.formula1.com/en/drivers/" + o.slug;
@@ -2058,6 +2107,27 @@
     $("teamsList").innerHTML = html;
   }
 
+  /* números de TEMPORADA da equipe ao vivo, derivados do statsCache (Jolpica).
+     null se os dados ainda não chegaram → o snapshot é usado como fallback. */
+  function liveTeamStats(ctorId) {
+    var st = statsCache[SEASON];
+    if (!st) return null;
+    var c = (st.ctors || []).filter(function (x) { return x.Constructor.constructorId === ctorId; })[0];
+    function res(rr) { return (rr || []).map(function (r) { return r.Results[0]; }); }
+    var pod = res(st.p1).concat(res(st.p2), res(st.p3));
+    var poleR = (st.poles || []).map(function (r) { return r.QualifyingResults[0]; });
+    function cnt(list) {
+      return list.filter(function (r) { return r && r.Constructor && r.Constructor.constructorId === ctorId; }).length;
+    }
+    return {
+      pos: c ? c.position : null,
+      pts: c ? c.points : null,
+      wins: c ? c.wins : String(cnt(res(st.p1))),
+      podiums: String(cnt(pod)),
+      poles: String(cnt(poleR))
+    };
+  }
+
   function showTeam(slug) {
     var d = TEAMS[slug];
     if (!d) return;
@@ -2094,13 +2164,15 @@
     setFigure($("thCarFig"), $("thCarImg"), teamCarURL(d.asset));
     setFigure($("thLogoFig"), $("thLogoImg"), teamLogoURL(d.asset));
 
-    /* números da temporada */
+    /* números da temporada — ao vivo (Jolpica) com fallback pro snapshot */
+    var lv = liveTeamStats(id) || {};
+    function pick(a, b) { return (a === null || a === undefined) ? b : a; }
     $("teamKpis").innerHTML =
-      "<li><strong>" + fmtPos(d.sPos) + "</strong><small>" + t("tm_pos") + "</small></li>" +
-      "<li><strong>" + (d.sPts || "0") + "</strong><small>" + t("tm_points") + "</small></li>" +
-      "<li><strong>" + (d.sWins || "0") + "</strong><small>" + t("tm_wins") + "</small></li>" +
-      "<li><strong>" + (d.sPoles || "0") + "</strong><small>" + t("tm_poles") + "</small></li>" +
-      "<li><strong>" + (d.sPodiums || "0") + "</strong><small>" + t("tm_podiums") + "</small></li>";
+      "<li><strong>" + fmtPos(pick(lv.pos, d.sPos)) + "</strong><small>" + t("tm_pos") + "</small></li>" +
+      "<li><strong>" + pick(lv.pts, d.sPts || "0") + "</strong><small>" + t("tm_points") + "</small></li>" +
+      "<li><strong>" + pick(lv.wins, d.sWins || "0") + "</strong><small>" + t("tm_wins") + "</small></li>" +
+      "<li><strong>" + pick(lv.poles, d.sPoles || "0") + "</strong><small>" + t("tm_poles") + "</small></li>" +
+      "<li><strong>" + pick(lv.podiums, d.sPodiums || "0") + "</strong><small>" + t("tm_podiums") + "</small></li>";
     $("teamUpdated").innerHTML = IC.clock +
       "<span>" + t("tm_updated").replace("{r}",
         (hub.lastRaceName ? gpShort(hub.lastRaceName) : "—") + " " + SEASON) + "</span>";
@@ -2315,6 +2387,8 @@
         status: (r[8] && r[8].MRData.StatusTable.Status) || []
       };
       renderStats(season);
+      /* dados da temporada atual chegaram → atualiza os KPIs das equipes ao vivo */
+      if (season === SEASON && teams.length) showTeam(teamSel);
     }).catch(function () {
       $("statsState").hidden = false;
       $("statsState").textContent = t("st_error");
