@@ -520,6 +520,29 @@
     return LANG === "en" ? s[1] : s[0];
   }
 
+  /* OpenF1: pré-carrega a sessão mais recente enquanto a Jolpica busca o
+     calendário. Assim uma API não precisa esperar a outra terminar. */
+  var OPENF1 = "https://api.openf1.org/v1";
+  var liveCache = { ts: 0, shown: false, inFlight: false };
+  var latestSessionPromise = null;
+  var OF1_NAME = {
+    "Practice 1": "s_fp1", "Practice 2": "s_fp2", "Practice 3": "s_fp3",
+    "Qualifying": "s_quali", "Sprint": "s_sprint", "Sprint Qualifying": "s_sq", "Race": "s_race"
+  };
+
+  function getLatestOpenF1Session() {
+    if (!latestSessionPromise) {
+      latestSessionPromise = getJSON(OPENF1 + "/sessions?session_key=latest").then(
+        function (arr) { latestSessionPromise = null; return arr; },
+        function (err) { latestSessionPromise = null; throw err; }
+      );
+    }
+    return latestSessionPromise;
+  }
+
+  /* começa a consulta sem bloquear o restante da página */
+  getLatestOpenF1Session().catch(function () {});
+
   /* lista ordenada das sessões do GP atual, a partir do calendário (Jolpica) */
   function weekendSessions() {
     if (!lastRace) return [];
@@ -611,25 +634,15 @@
         $("cdLabel").textContent = t("countdown_label");
       }
       renderStepper(ws);
-      if (ws.mode !== "pre") loadLiveSession();
-      else weekendHub(false);
     }
-
-    /* durante uma sessão ao vivo, atualiza os tempos a cada ~45s */
-    if (ws.mode !== "pre" && Date.now() - liveCache.ts > 45000) loadLiveSession();
+    /* o card de sessão (hub) é carregado por loadLiveSession(), independente
+       do tick e do calendário Jolpica — para aparecer assim que o site abre. */
   }
   tick();
   setInterval(tick, 1000);
 
-  /* ---------------- Tempos ao vivo da sessão (OpenF1) ----------------
-     Só durante um fim de semana de GP. CORS aberto; dados oficiais de
-     cronometragem repassados pela OpenF1 (api.openf1.org). */
-  var OPENF1 = "https://api.openf1.org/v1";
-  var liveCache = { ts: 0 };
-  var OF1_NAME = {
-    "Practice 1": "s_fp1", "Practice 2": "s_fp2", "Practice 3": "s_fp3",
-    "Qualifying": "s_quali", "Sprint": "s_sprint", "Sprint Qualifying": "s_sq", "Race": "s_race"
-  };
+  /* ---------------- Resultados da última sessão (OpenF1) ----------------
+     No plano gratuito, os dados aparecem após o encerramento da sessão. */
 
   function fmtLap(s) {
     var m = Math.floor(s / 60), r = (s - m * 60).toFixed(3);
@@ -652,6 +665,22 @@
     if (!restoreLiveCache()) weekendHub(false);
   }
 
+  function showLiveLoading() {
+    if (liveCache.shown || !$("liveTimes")) return;
+    weekendHub(true);
+    $("hubTracking").hidden = true;
+    $("liveSessTitle").textContent = t("wk_last");
+    $("liveSessTag").hidden = true;
+    $("liveSessLap").textContent = "";
+    $("sessTabs").innerHTML =
+      '<button type="button" class="active" disabled>...</button>';
+    $("liveTimes").innerHTML =
+      '<li style="--pos-team:#E10600;opacity:.72">' +
+        '<span class="lt-pos">—</span><span class="lt-photo"></span>' +
+        '<span class="lt-name">Carregando resultados<small>OpenF1</small></span>' +
+        '<span class="lt-time">...</span><span class="lt-gap"></span></li>';
+  }
+
   /* sessões do fim de semana + qual está selecionada */
   var weekendSess = { meeting: null, list: [], selManual: null };
 
@@ -670,15 +699,18 @@
   }
 
   function loadLiveSession() {
-    if (!$("hubLive") || !lastRace) return;
+    if (!$("hubLive") || liveCache.inFlight) return;
+    liveCache.inFlight = true;
     liveCache.ts = Date.now();
 
-    getJSON(OPENF1 + "/sessions?session_key=latest").then(function (arr) {
+    getLatestOpenF1Session().then(function (arr) {
       if (!Array.isArray(arr) || !arr[0]) { blockedFallback(); return; }
       var s = arr[0];
-      /* pertence a este fim de semana? (data próxima da corrida) */
-      var raceDay = new Date(lastRace.date + "T12:00:00Z").getTime();
-      if (Math.abs(new Date(s.date_start).getTime() - raceDay) > 4 * 864e5) { blockedFallback(); return; }
+      /* sessão recente? senão não é fim de semana de GP → hub normal.
+         (independe do calendário Jolpica, por isso carrega assim que o site abre) */
+      if (Math.abs(new Date(s.date_start).getTime() - Date.now()) > 4 * 864e5) { weekendHub(false); return; }
+      /* é fim de semana: mostra o cache/carregando enquanto os dados chegam */
+      if (!restoreLiveCache()) showLiveLoading();
 
       /* alvo: seleção manual (se já temos a lista) ou a própria "latest" (mais recente) */
       var target = (weekendSess.selManual && weekendSess.list.length &&
@@ -701,20 +733,58 @@
           renderSessionTabs(sel);
         }).catch(function () { renderSessionTabs(target); });
       }
-    }).catch(blockedFallback);
+    }).catch(blockedFallback).then(function () {
+      liveCache.inFlight = false;
+    });
   }
 
   function loadSessionData(sess) {
     var isLive = Date.now() >= sess.start && Date.now() <= sess.end;
-    /* 4 chamadas EM PARALELO (com retry no 429) — muito mais rápido que em série */
+
+    /* No plano gratuito não tentamos baixar telemetria durante a sessão. O
+       último resultado salvo continua visível até a publicação do novo. */
+    if (isLive) {
+      blockedFallback();
+      return Promise.resolve();
+    }
+
+    /* session_result traz a classificação pronta e evita baixar centenas de
+       KB de todas as voltas. Os tempos aparecem sem esperar clima/eventos. */
     return Promise.all([
-      getRetry(OPENF1 + "/laps?session_key=" + sess.key),
-      getRetry(OPENF1 + "/drivers?session_key=" + sess.key),
-      getRetry(OPENF1 + "/weather?session_key=" + sess.key),
-      getRetry(OPENF1 + "/race_control?session_key=" + sess.key)
+      getRetry(OPENF1 + "/session_result?session_key=" + sess.key + "&position%3C=5"),
+      getRetry(OPENF1 + "/drivers?session_key=" + sess.key)
     ]).then(function (r) {
       function arr(x) { return Array.isArray(x) ? x : []; }
-      renderWeekendHub(sess, arr(r[0]), arr(r[1]), arr(r[2]), arr(r[3]), isLive);
+      var results = arr(r[0]);
+      var drivers = arr(r[1]);
+
+      /* Converte o resultado resumido para o formato já usado pelo card. Em
+         classificação, duration pode ser [Q1, Q2, Q3]; usamos o último tempo. */
+      var laps = results.map(function (x) {
+        var duration = Array.isArray(x.duration)
+          ? x.duration.filter(function (v) { return typeof v === "number"; }).slice(-1)[0]
+          : x.duration;
+        return {
+          driver_number: x.driver_number,
+          lap_number: x.number_of_laps || 0,
+          lap_duration: duration
+        };
+      }).filter(function (x) { return typeof x.lap_duration === "number"; });
+
+      if (!laps.length) { blockedFallback(); return; }
+
+      var leader = renderWeekendHub(sess, laps, drivers, [], [], false);
+
+      /* Clima e eventos atualizam o segundo card depois, sem atrasar os tempos. */
+      Promise.all([
+        getRetry(OPENF1 + "/weather?session_key=" + sess.key),
+        getRetry(OPENF1 + "/race_control?session_key=" + sess.key)
+      ]).then(function (extra) {
+        if (!leader) return;
+        renderTracking(sess, leader, arr(extra[0]), arr(extra[1]), false,
+          sess.labelKey || OF1_NAME[sess.session_name]);
+        saveLiveCache();
+      });
     });
   }
 
@@ -736,6 +806,10 @@
     var sel = weekendSess.list.filter(function (x) { return x.key === weekendSess.selManual; })[0];
     if (sel) { renderSessionTabs(sel); loadSessionData(sel); }
   });
+
+  /* dispara já ao abrir (não espera Jolpica) e revalida a cada 5 min */
+  loadLiveSession();
+  setInterval(loadLiveSession, 300000);
 
   function renderWeekendHub(sess, laps, drivers, weather, rc, isLive) {
     var dmap = {};
@@ -780,6 +854,7 @@
 
     renderTracking(sess, rows[0], weather, rc, isLive, lk);
     saveLiveCache();
+    return rows[0];
   }
 
   /* guarda a última sessão renderizada — durante uma sessão AO VIVO a OpenF1
@@ -787,7 +862,7 @@
   function saveLiveCache() {
     try {
       localStorage.setItem("f1t-live", JSON.stringify({
-        raceDate: lastRace.date,
+        ts: Date.now(),
         liveTitle: $("liveSessTitle").textContent,
         liveLap: $("liveSessLap").textContent,
         sessTabs: $("sessTabs").innerHTML,
@@ -801,7 +876,7 @@
   function restoreLiveCache() {
     try {
       var c = JSON.parse(localStorage.getItem("f1t-live") || "null");
-      if (!c || !lastRace || c.raceDate !== lastRace.date) return false;
+      if (!c || (Date.now() - (c.ts || 0)) > 3 * 864e5) return false;   /* cache só se recente (<3 dias) */
       $("liveSessTitle").textContent = c.liveTitle;
       $("liveSessTag").hidden = true;      /* cache = sessão já encerrada */
       $("liveSessLap").textContent = c.liveLap;
@@ -895,6 +970,11 @@
 
   function renderNextRace(race, totalRounds) {
     lastRace = race; lastTotal = totalRounds;
+
+    /* Mostra imediatamente o último resultado salvo enquanto a atualização
+       silenciosa consulta as APIs. Antes, o cache só aparecia após uma falha. */
+    if (weekendState().mode !== "pre") restoreLiveCache();
+
     var c = CIRCUITS[race.Circuit.circuitId] || {};
     var loc = race.Circuit.Location;
 
